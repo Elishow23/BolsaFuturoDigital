@@ -1,5 +1,4 @@
 import sqlite3
-from contextlib import contextmanager
 
 # Nome do arquivo do banco de dados
 DATABASE_NAME = 'obra.db'
