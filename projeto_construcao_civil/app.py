@@ -1,5 +1,19 @@
+import os
+import sys
 import database as db
 from models import Obra, Funcionario, Etapa, EtapaFundacao, EtapaAcabamento
+
+
+# -----------------------------------------------------------------
+# FUNÇÃO PARA LIMPAR TELA (SEM IPYTHON)
+# -----------------------------------------------------------------
+
+def clear_screen():
+    """Limpa a tela do terminal (Windows, Linux e Mac)"""
+    if sys.platform.startswith('win'):
+        os.system('cls')  # Windows
+    else:
+        os.system('clear')  # Linux e Mac
 
 
 # -----------------------------------------------------------------
@@ -20,7 +34,7 @@ def menu():
     obra = Obra(nome_da_obra)
 
     # Mensagem de boas-vindas
-    clear_output(wait=True)
+    clear_screen()
     print("================================================================")
     print(f"     Bem-vindo ao Sistema de Gerenciamento de Obras (SGO)")
     print("================================================================")
@@ -35,7 +49,7 @@ def menu():
     input("\nPressione Enter para ir ao Menu Principal...")
 
     while True:
-        clear_output(wait=True)
+        clear_screen()
 
         print(f"\n--- Obra: {obra.nome_obra} ---")
         print("\n===== MENU PRINCIPAL =====")
@@ -55,6 +69,7 @@ def menu():
         opcao = input("\nEscolha uma opção (0-11): ")
 
         if opcao == "1":
+            clear_screen()
             print("\n--- Adicionar Novo Funcionário ---")
             id_func = input("ID do Funcionário (ex: 103): ")
             nome = input("Nome (ex: Joao Silva): ")
@@ -69,6 +84,7 @@ def menu():
                 obra.adicionar_funcionario(novo_func)
 
         elif opcao == "2":
+            clear_screen()
             print("\n--- Ver Detalhes do Funcionário ---")
             if not obra.mostrar_funcionarios():
                 input("Pressione Enter para continuar...")
@@ -79,6 +95,7 @@ def menu():
                 func.mostrar_info()
 
         elif opcao == "3":
+            clear_screen()
             print("\n--- Atualizar Localização de Funcionário ---")
             if not obra.mostrar_funcionarios():
                 input("Pressione Enter para continuar...")
@@ -94,6 +111,7 @@ def menu():
                     func.atualizar_localizacao(nova_loc)
 
         elif opcao == "4":
+            clear_screen()
             print("--- Tipo da Etapa ---")
             print("1. Etapa de Fundação")
             print("2. Etapa de Acabamento")
@@ -101,7 +119,8 @@ def menu():
 
             while True:
                 tipo = input("Escolha o tipo (1, 2 ou 3): ")
-                if tipo in ["1", "2", "3"]: break
+                if tipo in ["1", "2", "3"]: 
+                    break
                 print("[ERRO] Opção inválida. Digite 1, 2 ou 3.")
 
             titulo = input("Título da etapa (ex: Instalação Elétrica): ")
@@ -119,6 +138,7 @@ def menu():
             obra.adicionar_etapa(nova_etapa)
 
         elif opcao == "5":
+            clear_screen()
             if not obra.mostrar_etapas():
                 input("Pressione Enter para continuar...")
                 continue
@@ -135,6 +155,7 @@ def menu():
                     etapa.designar_responsavel(func)
 
         elif opcao == "6":
+            clear_screen()
             if not obra.mostrar_etapas():
                 input("Pressione Enter para continuar...")
                 continue
@@ -153,6 +174,7 @@ def menu():
                         print(f"[ERRO] Status inválido. Use um dos: {status_validos}")
 
         elif opcao == "7":
+            clear_screen()
             if not obra.mostrar_funcionarios():
                 input("Pressione Enter para continuar...")
                 continue
@@ -162,19 +184,27 @@ def menu():
                 func.listar_etapas_do_funcionario()
 
         elif opcao == "8":
+            clear_screen()
             obra.mostrar_funcionarios()
 
         elif opcao == "9":
+            clear_screen()
             obra.mostrar_etapas()
 
         elif opcao == "10":
+            clear_screen()
             obra.gerar_relatorio_progresso()
 
         elif opcao == "11":
+            clear_screen()
             obra.gerar_diario_obra()
 
         elif opcao == "0":
-            print("Saindo do sistema...")
+            clear_screen()
+            print("\n" + "="*50)
+            print("  Obrigado por usar o Sistema de Gerenciamento de Obras!")
+            print("="*50)
+            print("\nSaindo do sistema...")
             break
 
         else:
