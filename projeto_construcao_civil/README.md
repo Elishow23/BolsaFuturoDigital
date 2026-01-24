@@ -1,3 +1,6 @@
+## **RODRIGO GANDARELA, ELISEU COSME**
+
+
 ## **Objetivo**
 
 Organizar e acompanhar projetos de construção civil — desde a **concepção inicial** até a **execução e entrega da obra** — utilizando um sistema que integre planejamento, execução e monitoramento automatizado.
