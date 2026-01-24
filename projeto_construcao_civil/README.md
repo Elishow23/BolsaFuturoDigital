@@ -110,13 +110,10 @@ O objetivo é **criar um sistema que estruture, controle e acompanhe o andamento
 
 O sistema utiliza um banco de dados relacional com as seguintes tabelas:
 
-![image1](image1)
-
 ### Tabelas Principais:
 
 - **funcionario**: Armazena informações dos colaboradores (nome, função, telefone, localização)
 - **etapa**: Gerencia as etapas da obra (título, descrição, data de entrega, status)
-- **obra**: Controla as obras em andamento (ID da obra e nome)
 - **fundacao**: Registra dados de fundação (tipo de solo e etapa)
 - **acabamento**: Controla os acabamentos (material principal e etapa)
 
