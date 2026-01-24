@@ -1,26 +1,26 @@
 from IPython.display import clear_output
-import matplotlib.pyplot as plt
-import datetime 
+import database as db
+from models import Obra, Funcionario, Etapa, EtapaFundacao, EtapaAcabamento
 
 
-
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 # MENU PRINCIPAL (EXECUÇÃO)
 # -----------------------------------------------------------------
 
 def menu():
-    """ Função principal que roda o menu interativo """
+    """Função principal que roda o menu interativo"""
+    
+    # Inicializa o banco de dados
+    db.inicializar_banco()
 
     # Pergunta o nome da obra ao iniciar
     nome_da_obra = input("Digite o nome da Obra para iniciar o sistema: ")
     if not nome_da_obra:
-        nome_da_obra = "Obra Padrão" # Garante que não fique vazio
+        nome_da_obra = "Obra Padrão"
 
     obra = Obra(nome_da_obra)
 
-    # --- DADOS INICIAIS REMOVIDOS ---
-
-    # --- MENSAGEM DE BOAS-VINDAS E APRESENTAÇÃO ---
+    # Mensagem de boas-vindas
     clear_output(wait=True)
     print("================================================================")
     print(f"     Bem-vindo ao Sistema de Gerenciamento de Obras (SGO)")
@@ -33,7 +33,7 @@ def menu():
     print("  *  Gerar relatórios de progresso e diários de obra.")
     print("\n================================================================")
 
-    input("\nPressione Enter para ir ao Menu Principal...") # Pausa inicial
+    input("\nPressione Enter para ir ao Menu Principal...")
 
     while True:
         clear_output(wait=True)
@@ -50,10 +50,10 @@ def menu():
         print("8. Listar Todos os Funcionários")
         print("9. Listar Todas as Etapas da Obra")
         print("10. Ver Relatório de Progresso")
-        print("11. Gerar Diário de Obra (com Gráfico)") # <-- NOVA OPÇÃO
+        print("11. Gerar Diário de Obra (com Gráfico)")
         print("===========================")
         print("0. Sair")
-        opcao = input("\nEscolha uma opção (0-11): ") # <-- Menu atualizado
+        opcao = input("\nEscolha uma opção (0-11): ")
 
         if opcao == "1":
             print("\n--- Adicionar Novo Funcionário ---")
@@ -66,7 +66,7 @@ def menu():
             if not id_func or not nome or not funcao or not loc:
                 print("\n[ERRO] ID, Nome, Função e Localização são obrigatórios.")
             else:
-                novo_func = Funcionario(id_func, nome, funcao, tel, loc)
+                novo_func = Funcionario(id_func, nome, funcao, tel, loc, obra.id)
                 obra.adicionar_funcionario(novo_func)
 
         elif opcao == "2":
@@ -111,12 +111,12 @@ def menu():
 
             if tipo == "1":
                 solo = input("Tipo de solo (ex: Argiloso, Arenoso): ")
-                nova_etapa = EtapaFundacao(titulo, desc, data, solo)
+                nova_etapa = EtapaFundacao(titulo, desc, data, solo, obra.id)
             elif tipo == "2":
                 material = input("Material principal (ex: Tinta, Gesso): ")
-                nova_etapa = EtapaAcabamento(titulo, desc, data, material)
+                nova_etapa = EtapaAcabamento(titulo, desc, data, material, obra.id)
             else:
-                nova_etapa = Etapa(titulo, desc, data)
+                nova_etapa = Etapa(titulo, desc, data, obra.id)
             obra.adicionar_etapa(nova_etapa)
 
         elif opcao == "5":
@@ -171,11 +171,11 @@ def menu():
         elif opcao == "10":
             obra.gerar_relatorio_progresso()
 
-        elif opcao == "11": # <-- NOVA OPÇÃO ADICIONADA
+        elif opcao == "11":
             obra.gerar_diario_obra()
 
         elif opcao == "0":
-            print("Saindo do sistema...") # <-- MENSAGEM DE SAÍDA LIMPA
+            print("Saindo do sistema...")
             break
 
         else:
@@ -183,287 +183,7 @@ def menu():
 
         input("\nPressione Enter para continuar...")
 
+
 # --- EXECUÇÃO DO PROGRAMA ---
-menu()
-
-
-
-# -----------------------------------------------------------------
-# CLASSE GERENCIADORA (OBRA)
-# -----------------------------------------------------------------
-
-class Obra:
-    """ Gerencia a obra, funcionários e etapas """
-    def __init__(self, nome_obra):
-        self.nome_obra = nome_obra
-        self.funcionarios = []
-        self.etapas = []
-
-    def adicionar_funcionario(self, funcionario):
-        """ Adiciona um novo funcionário à obra """
-        self.funcionarios.append(funcionario)
-        print(f"Funcionário {funcionario.nome} (ID: {funcionario.id_funcionario}) adicionado à obra.")
-
-    def adicionar_etapa(self, etapa):
-        """ Adiciona uma nova etapa ao projeto """
-        self.etapas.append(etapa)
-        print(f"Etapa '{etapa.titulo}' adicionada à obra.")
-
-    def mostrar_funcionarios(self):
-        """ Lista todos os funcionários (resumido) - com localização """
-        print(f"\n--- Funcionários da Obra {self.nome_obra} ---")
-        if not self.funcionarios:
-            print("Nenhum funcionário cadastrado.")
-            return False
-
-        for i, func in enumerate(self.funcionarios):
-            print(f"  {i+1}. ID: {func.id_funcionario} | {func.nome} ({func.funcao}) | Local: {func.localizacao}")
-        return True
-
-    def mostrar_etapas(self):
-        """ Lista todas as etapas, demonstrando Polimorfismo """
-        print(f"\n--- Etapas da Obra {self.nome_obra} ---")
-        if not self.etapas:
-            print("Nenhuma etapa cadastrada.")
-            return False
-
-        for i, etapa in enumerate(self.etapas):
-            print(f"\n  (Índice {i+1})")
-            # AQUI OCORRE O POLIMORFISMO
-            etapa.exibir_detalhes()
-        return True
-
-    def gerar_relatorio_progresso(self):
-        """ Relatório de Progresso """
-        print(f"\n--- Relatório de Progresso: {self.nome_obra} ---")
-        if not self.etapas:
-            print("Nenhuma etapa cadastrada.")
-            return
-
-        concluidas = 0
-        pendentes_andamento = 0
-        total = len(self.etapas)
-
-        for etapa in self.etapas:
-            if etapa.status == "Concluída":
-                concluidas += 1
-            else:
-                pendentes_andamento += 1
-
-        print(f"Total de Etapas: {total}")
-        print(f"Etapas Concluídas: {concluidas}")
-        print(f"Etapas Pendentes/Em Andamento: {pendentes_andamento}")
-        print("---------------------------------")
-
-    # --- NOVO MÉTODO: DIÁRIO DE OBRA ---
-    def gerar_diario_obra(self):
-        "Gera um Diário de Obra com gráfico de andamento por etapa"
-        print(f"\n=== Diário de Obra — {self.nome_obra} ===")
-
-        if not self.etapas:
-            print("Nenhuma etapa cadastrada.")
-            return
-
-        nomes = []
-        status_list = [] # Renomeado para não conflitar com variável 'status'
-        cores = []
-        concluidas = 0
-
-        for etapa in self.etapas:
-            nomes.append(etapa.titulo)
-            status_list.append(etapa.status)
-            if etapa.status == "Concluída":
-                cores.append("green")
-                concluidas += 1
-            elif etapa.status == "Em andamento":
-                cores.append("orange")
-            else:
-                cores.append("gray")
-
-            # Exibição textual do DO
-            resp = etapa.responsavel.nome if etapa.responsavel else "Não designado"
-            print(f"\nEtapa: {etapa.titulo}")
-            print(f"Descrição: {etapa.descricao}")
-            print(f"Status: {etapa.status}")
-            print(f"Responsável: {resp}")
-            print(f"Data de entrega: {etapa.data_entrega}")
-
-        # Geração do gráfico de andamento
-        total = len(self.etapas)
-        andamento = (concluidas / total) * 100 if total > 0 else 0
-
-        try:
-            plt.figure(figsize=(10, 6))
-            # O gráfico de barras horizontal é melhor para listas de tarefas
-            plt.barh(nomes, [1] * len(nomes), color=cores, align='center', height=0.5)
-            plt.title(f"Andamento da Obra — {self.nome_obra}")
-            plt.xlabel("Status")
-            plt.ylabel("Etapas")
-            # Remove os valores numéricos do eixo X, já que as cores são o indicador
-            plt.xticks([])
-            # Ajusta o layout para não cortar os nomes das etapas
-            plt.tight_layout()
-
-            # Salva o gráfico
-            nome_arquivo = "diario_obra.png"
-            plt.savefig(nome_arquivo)
-            plt.show() # Mostra o gráfico no Colab
-
-            print(f"\n[INFO] Diário de Obra gerado com sucesso!")
-            print(f"Progresso geral da obra: {andamento:.1f}% concluído.")
-            print(f"Gráfico salvo como '{nome_arquivo}'.")
-
-        except Exception as e:
-            print(f"\n[ERRO] Não foi possível gerar o gráfico: {e}")
-            print("Verifique se a biblioteca matplotlib está instalada corretamente.")
-
-
-    # --- Métodos de busca para o menu ---
-    def buscar_funcionario_por_indice(self, indice_str):
-        try:
-            indice = int(indice_str) - 1
-            if 0 <= indice < len(self.funcionarios):
-                return self.funcionarios[indice]
-        except: pass
-        print("Índice de funcionário inválido.")
-        return None
-
-    def buscar_etapa_por_indice(self, indice_str):
-        try:
-            indice = int(indice_str) - 1
-            if 0 <= indice < len(self.etapas):
-                return self.etapas[indice]
-        except: pass
-        print("Índice de etapa inválido.")
-        return None
-
-
-
-# -----------------------------------------------------------------
-# CLASSE FUNDACAO (ETAPA)
-# -----------------------------------------------------------------
-
-class EtapaFundacao(Etapa):
-    """ Classe filha para etapas de fundação. Demonstra Herança. """
-    def __init__(self, titulo, descricao, data_entrega, tipo_solo):
-        super().__init__(titulo, descricao, data_entrega)
-        self.tipo_solo = tipo_solo
-
-    def exibir_detalhes(self):
-        """
-        POLIMORFISMO:
-        Este método sobrescreve o 'exibir_detalhes' da classe-pai.
-        """
-        resp = self.responsavel.nome if self.responsavel else "Ninguém"
-        print(f"\n  [ETAPA FUNDAÇÃO] {self.titulo} ({self.status})")
-        print(f"    Tipo de Solo: {self.tipo_solo} | Responsável: {resp}")
-        print(f"    Entrega: {self.data_entrega} | Descrição: {self.descricao}")
-
-class EtapaAcabamento(Etapa):
-    """ Outra classe filha para etapas de acabamento. """
-    def __init__(self, titulo, descricao, data_entrega, material_principal):
-        super().__init__(titulo, descricao, data_entrega)
-        self.material_principal = material_principal
-
-    def exibir_detalhes(self):
-        """ POLIMORFISMO: Outra implementação do método. """
-        resp = self.responsavel.nome if self.responsavel else "Ninguém"
-        print(f"\n  [ETAPA ACABAMENTO] {self.titulo} ({self.status})")
-        print(f"    Material: {self.material_principal} | Responsável: {resp}")
-        print(f"    Entrega: {self.data_entrega} | Descrição: {self.descricao}")
-
-
-
-# -----------------------------------------------------------------
-# CLASSE ETAPA (BASE)
-# -----------------------------------------------------------------
-
-class Etapa:
-    """
-    Classe base para uma Etapa da Obra.
-    Demonstra Encapsulamento.
-    """
-    def __init__(self, titulo, descricao, data_entrega):
-        self.titulo = titulo
-        self.descricao = descricao
-        self.data_entrega = data_entrega
-        self.status = "Pendente"
-        self.responsavel = None
-
-    def designar_responsavel(self, funcionario):
-        """ Designação de Tarefas (Etapas) """
-        if isinstance(funcionario, Funcionario):
-            self.responsavel = funcionario
-            funcionario.adicionar_etapa(self)
-            print(f"Etapa '{self.titulo}' designada para {funcionario.nome}.")
-        else:
-            print("Erro: Só é possível designar para um Funcionario.")
-
-    def atualizar_status(self, novo_status):
-        """ Gestão de Status """
-        if novo_status in ["Pendente", "Em andamento", "Concluída"]:
-            self.status = novo_status
-            print(f"Status da etapa '{self.titulo}' alterado para '{novo_status}'.")
-        else:
-            print(f"Erro: Status '{novo_status}' é inválido.")
-
-    def exibir_detalhes(self):
-        """
-        Método base para Polimorfismo.
-        As classes filhas vão sobrescrever este método.
-        """
-        resp = self.responsavel.nome if self.responsavel else "Ninguém"
-        print(f"  [Etapa Padrão] {self.titulo} ({self.status})")
-        print(f"    Descrição: {self.descricao}")
-        print(f"    Responsável: {resp} | Entrega: {self.data_entrega}")
-
-
-
-# -----------------------------------------------------------------
-# CLASSE FUNCIONARIO (COM LOCALIZAÇÃO)
-# -----------------------------------------------------------------
-
-class Funcionario:
-    """
-    Representa um funcionário da obra.
-    Localização é definida na criação.
-    """
-    def __init__(self, id_funcionario, nome, funcao, telefone, localizacao_inicial):
-        self.id_funcionario = id_funcionario
-        self.nome = nome
-        self.funcao = funcao
-        self.telefone = telefone
-        self.data_contratacao = datetime.date.today().strftime('%d/%m/%Y')
-        self.localizacao = localizacao_inicial
-        self.etapas_designadas = []
-
-    def adicionar_etapa(self, etapa):
-        """ Designa uma etapa para este funcionário """
-        if etapa not in self.etapas_designadas:
-            self.etapas_designadas.append(etapa)
-
-    def atualizar_localizacao(self, nova_localizacao):
-        """ Método para atualizar a localização do funcionário na obra """
-        self.localizacao = nova_localizacao
-        print(f"Localização de {self.nome} atualizada para: {self.localizacao}")
-
-    def mostrar_info(self):
-        """ Mostra os dados DETALHADOS do funcionário """
-        print(f"\n--- Detalhes do Funcionário ID: {self.id_funcionario} ---")
-        print(f"Nome: {self.nome}")
-        print(f"Função: {self.funcao}")
-        print(f"Telefone: {self.telefone}")
-        print(f"Data de Contratação: {self.data_contratacao}")
-        print(f"Localização Atual: {self.localizacao}")
-        print(f"Total de Etapas Designadas: {len(self.etapas_designadas)}")
-
-    def listar_etapas_do_funcionario(self):
-        """
-        Lista de Etapas por Membro (Listagem Completa)
-        """
-        print(f"\n--- Etapas de {self.nome} (ID: {self.id_funcionario}) ---")
-        if not self.etapas_designadas:
-            print("Nenhuma etapa designada.")
-        else:
-            for etapa in self.etapas_designadas:
-                etapa.exibir_detalhes()
+if __name__ == "__main__":
+    menu()
