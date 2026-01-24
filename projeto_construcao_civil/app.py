@@ -1,4 +1,3 @@
-from IPython.display import clear_output
 import database as db
 from models import Obra, Funcionario, Etapa, EtapaFundacao, EtapaAcabamento
 
