@@ -19,7 +19,7 @@ def inicializar_banco():
         CREATE TABLE IF NOT EXISTS obras (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
-            data_criacao TEXT
+            data_criacao VARCHAR(45)
         )
     ''')
     
