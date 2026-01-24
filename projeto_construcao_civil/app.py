@@ -3,11 +3,6 @@ import sys
 import database as db
 from models import Obra, Funcionario, Etapa, EtapaFundacao, EtapaAcabamento
 
-
-# -----------------------------------------------------------------
-# FUNÇÃO PARA LIMPAR TELA (SEM IPYTHON)
-# -----------------------------------------------------------------
-
 def clear_screen():
     """Limpa a tela do terminal (Windows, Linux e Mac)"""
     if sys.platform.startswith('win'):
