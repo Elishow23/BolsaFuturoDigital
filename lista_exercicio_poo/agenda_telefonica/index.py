@@ -1,5 +1,5 @@
 from contact import Contact
-from addressBook import AddressBook
+from bd import AddressBook
 
 opcao = 10
 
