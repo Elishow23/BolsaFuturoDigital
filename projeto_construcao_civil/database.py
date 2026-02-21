@@ -1,285 +1,337 @@
-import sqlite3
+import mysql.connector
 
-# Nome do arquivo do banco de dados
-DATABASE_NAME = 'obra.db'
+# ------------------------------
+# CONEXÃO
+# ------------------------------
+
+def conectar():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Elias_0301!",
+        database="construcao_civil", 
+        ssl_disabled=True
+    )
 
 
-def get_connection():
-    """Retorna uma nova conexão com o banco de dados"""
-    return sqlite3.connect(DATABASE_NAME)
-
+# ------------------------------
+# INICIALIZAR BANCO
+# ------------------------------
 
 def inicializar_banco():
-    """Cria as tabelas do banco de dados se não existirem"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # Tabela de Obras
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS obras (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            data_criacao VARCHAR(45)
-        )
-    ''')
-    
-    # Tabela de Funcionários
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS funcionarios (
-            id_funcionario TEXT PRIMARY KEY,
-            nome TEXT NOT NULL,
-            funcao TEXT NOT NULL,
-            telefone TEXT,
-            data_contratacao TEXT,
-            localizacao TEXT NOT NULL,
-            obra_id INTEGER,
-            FOREIGN KEY (obra_id) REFERENCES obras(id)
-        )
-    ''')
-    
-    # Tabela de Etapas
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS etapas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            titulo TEXT NOT NULL,
-            descricao TEXT,
-            data_entrega TEXT,
-            status TEXT DEFAULT 'Pendente',
-            tipo_etapa TEXT DEFAULT 'Padrao',
-            tipo_solo TEXT,
-            material_principal TEXT,
-            responsavel_id TEXT,
-            obra_id INTEGER,
-            FOREIGN KEY (responsavel_id) REFERENCES funcionarios(id_funcionario),
-            FOREIGN KEY (obra_id) REFERENCES obras(id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    print("[INFO] Banco de dados inicializado com sucesso!")
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS obras (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(150),
+        data_criacao VARCHAR(20)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS funcionarios (
+        id INT PRIMARY KEY,
+        nome VARCHAR(150),
+        funcao VARCHAR(100),
+        telefone VARCHAR(20),
+        data_contratacao VARCHAR(20),
+        localizacao VARCHAR(100),
+        obra_id INT,
+        FOREIGN KEY (obra_id) REFERENCES obras(id) ON DELETE CASCADE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS etapas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        titulo VARCHAR(150),
+        descricao TEXT,
+        data_entrega VARCHAR(20),
+        status VARCHAR(50),
+        tipo_etapa VARCHAR(50),
+        tipo_solo VARCHAR(100),
+        material_principal VARCHAR(100),
+        responsavel_id INT,
+        obra_id INT,
+        FOREIGN KEY (responsavel_id) REFERENCES funcionarios(id) ON DELETE SET NULL,
+        FOREIGN KEY (obra_id) REFERENCES obras(id) ON DELETE CASCADE
+    )
+    """)
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
 
 
-# =================================================================
-# FUNÇÕES CRUD PARA OBRAS
-# =================================================================
+# ------------------------------
+# OBRA
+# ------------------------------
 
 def criar_obra(nome, data_criacao):
-    """Cria uma nova obra no banco de dados"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO obras (nome, data_criacao) VALUES (?, ?)
-    ''', (nome, data_criacao))
-    conn.commit()
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute(
+        "INSERT INTO obras (nome, data_criacao) VALUES (%s, %s)",
+        (nome, data_criacao)
+    )
+
+    conexao.commit()
     obra_id = cursor.lastrowid
-    conn.close()
+
+    cursor.close()
+    conexao.close()
     return obra_id
 
 
-def buscar_obra_por_id(obra_id):
-    """Busca uma obra pelo ID"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, nome, data_criacao FROM obras WHERE id = ?', (obra_id,))
-    resultado = cursor.fetchone()
-    conn.close()
-    return resultado
+# ------------------------------
+# FUNCIONARIO
+# ------------------------------
 
+def inserir_funcionario(id_funcionario, nome, funcao, telefone,
+                        data_contratacao, localizacao, obra_id):
 
-# =================================================================
-# FUNÇÕES CRUD PARA FUNCIONÁRIOS
-# =================================================================
+    conexao = conectar()
+    cursor = conexao.cursor()
 
-def inserir_funcionario(id_funcionario, nome, funcao, telefone, data_contratacao, localizacao, obra_id):
-    """Insere um novo funcionário no banco de dados"""
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO funcionarios (id_funcionario, nome, funcao, telefone, 
-                                     data_contratacao, localizacao, obra_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (id_funcionario, nome, funcao, telefone, data_contratacao, localizacao, obra_id))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        print(f"[ERRO] Funcionário com ID {id_funcionario} já existe.")
-        return False
+    cursor.execute("""
+        INSERT INTO funcionarios
+        (id, nome, funcao, telefone, data_contratacao, localizacao, obra_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (id_funcionario, nome, funcao, telefone,
+          data_contratacao, localizacao, obra_id))
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+    return True
 
 
 def atualizar_localizacao_funcionario(id_funcionario, nova_localizacao):
-    """Atualiza a localização de um funcionário"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        UPDATE funcionarios SET localizacao = ? WHERE id_funcionario = ?
-    ''', (nova_localizacao, id_funcionario))
-    conn.commit()
-    conn.close()
+    conexao = conectar()
+    cursor = conexao.cursor()
 
+    cursor.execute("""
+        UPDATE funcionarios
+        SET localizacao = %s
+        WHERE id = %s
+    """, (nova_localizacao, id_funcionario))
 
-def buscar_funcionario_por_id(id_funcionario):
-    """Busca um funcionário pelo ID"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id_funcionario, nome, funcao, telefone, data_contratacao, localizacao, obra_id
-        FROM funcionarios WHERE id_funcionario = ?
-    ''', (id_funcionario,))
-    resultado = cursor.fetchone()
-    conn.close()
-    return resultado
+    conexao.commit()
+    cursor.close()
+    conexao.close()
 
 
 def listar_funcionarios_por_obra(obra_id):
-    """Lista todos os funcionários de uma obra"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id_funcionario, nome, funcao, localizacao 
-        FROM funcionarios WHERE obra_id = ?
-        ORDER BY nome
-    ''', (obra_id,))
-    resultados = cursor.fetchall()
-    conn.close()
-    return resultados
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, funcao, localizacao
+        FROM funcionarios
+        WHERE obra_id = %s
+    """, (obra_id,))
+
+    dados = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+    return dados
 
 
-def contar_etapas_funcionario(id_funcionario):
-    """Conta quantas etapas um funcionário possui"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT COUNT(*) FROM etapas WHERE responsavel_id = ?
-    ''', (id_funcionario,))
-    resultado = cursor.fetchone()[0]
-    conn.close()
-    return resultado
+def buscar_funcionario_por_id(id_funcionario):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, funcao, telefone, data_contratacao,
+               localizacao, obra_id
+        FROM funcionarios
+        WHERE id = %s
+    """, (id_funcionario,))
+
+    dado = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+    return dado
 
 
-# =================================================================
-# FUNÇÕES CRUD PARA ETAPAS
-# =================================================================
+# ------------------------------
+# ETAPA
+# ------------------------------
 
-def inserir_etapa(titulo, descricao, data_entrega, status, tipo_etapa, tipo_solo, material_principal, responsavel_id, obra_id):
-    """Insere uma nova etapa no banco de dados"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO etapas (titulo, descricao, data_entrega, status, tipo_etapa,
-                           tipo_solo, material_principal, responsavel_id, obra_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (titulo, descricao, data_entrega, status, tipo_etapa, tipo_solo, material_principal, responsavel_id, obra_id))
-    conn.commit()
+def inserir_etapa(titulo, descricao, data_entrega, status,
+                  tipo_etapa, tipo_solo, material_principal,
+                  responsavel_id, obra_id):
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        INSERT INTO etapas
+        (titulo, descricao, data_entrega, status,
+         tipo_etapa, tipo_solo, material_principal,
+         responsavel_id, obra_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (titulo, descricao, data_entrega, status,
+          tipo_etapa, tipo_solo, material_principal,
+          responsavel_id, obra_id))
+
+    conexao.commit()
     etapa_id = cursor.lastrowid
-    conn.close()
+
+    cursor.close()
+    conexao.close()
     return etapa_id
 
 
+def designar_responsavel_etapa(etapa_id, funcionario_id):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        UPDATE etapas
+        SET responsavel_id = %s
+        WHERE id = %s
+    """, (funcionario_id, etapa_id))
+
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+
 def atualizar_status_etapa(etapa_id, novo_status):
-    """Atualiza o status de uma etapa"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        UPDATE etapas SET status = ? WHERE id = ?
-    ''', (novo_status, etapa_id))
-    conn.commit()
-    conn.close()
+    conexao = conectar()
+    cursor = conexao.cursor()
 
+    cursor.execute("""
+        UPDATE etapas
+        SET status = %s
+        WHERE id = %s
+    """, (novo_status, etapa_id))
 
-def designar_responsavel_etapa(etapa_id, id_funcionario):
-    """Designa um funcionário como responsável por uma etapa"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        UPDATE etapas SET responsavel_id = ? WHERE id = ?
-    ''', (id_funcionario, etapa_id))
-    conn.commit()
-    conn.close()
+    conexao.commit()
+    cursor.close()
+    conexao.close()
 
 
 def listar_etapas_por_obra(obra_id):
-    """Lista todas as etapas de uma obra com informações do responsável"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT e.id, e.titulo, e.descricao, e.data_entrega, e.status, 
-               e.tipo_etapa, e.tipo_solo, e.material_principal,
-               f.nome as responsavel_nome
-        FROM etapas e
-        LEFT JOIN funcionarios f ON e.responsavel_id = f.id_funcionario
-        WHERE e.obra_id = ?
-        ORDER BY e.id
-    ''', (obra_id,))
-    resultados = cursor.fetchall()
-    conn.close()
-    return resultados
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, titulo, descricao, data_entrega,
+               status, tipo_etapa, tipo_solo,
+               material_principal,
+               (SELECT nome FROM funcionarios WHERE id = responsavel_id)
+        FROM etapas
+        WHERE obra_id = %s
+    """, (obra_id,))
+
+    dados = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+    return dados
 
 
-def listar_etapas_por_funcionario(id_funcionario):
-    """Lista todas as etapas de um funcionário específico"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id, titulo, descricao, data_entrega, status, tipo_etapa, 
-               tipo_solo, material_principal
-        FROM etapas WHERE responsavel_id = ?
-        ORDER BY id
-    ''', (id_funcionario,))
-    resultados = cursor.fetchall()
-    conn.close()
-    return resultados
+def buscar_etapa_por_id(id_etapa):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, titulo, descricao, data_entrega,
+               status, tipo_etapa, tipo_solo,
+               material_principal, responsavel_id, obra_id
+        FROM etapas
+        WHERE id = %s
+    """, (id_etapa,))
+
+    dado = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+    return dado
 
 
-def buscar_etapa_por_id(etapa_id):
-    """Busca uma etapa pelo ID"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id, titulo, descricao, data_entrega, status, tipo_etapa,
-               tipo_solo, material_principal, responsavel_id, obra_id
-        FROM etapas WHERE id = ?
-    ''', (etapa_id,))
-    resultado = cursor.fetchone()
-    conn.close()
-    return resultado
-
-
-# =================================================================
-# FUNÇÕES DE RELATÓRIO
-# =================================================================
+# ------------------------------
+# CONTAGENS E RELATÓRIOS
+# ------------------------------
 
 def contar_etapas_por_status(obra_id):
-    """Conta etapas por status para relatório de progresso"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT COUNT(*) FROM etapas WHERE obra_id = ?', (obra_id,))
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM etapas WHERE obra_id = %s
+    """, (obra_id,))
     total = cursor.fetchone()[0]
-    
-    cursor.execute('''
-        SELECT COUNT(*) FROM etapas WHERE obra_id = ? AND status = 'Concluída'
-    ''', (obra_id,))
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM etapas
+        WHERE obra_id = %s AND status = 'Concluída'
+    """, (obra_id,))
     concluidas = cursor.fetchone()[0]
-    
-    conn.close()
+
+    cursor.close()
+    conexao.close()
+
     return total, concluidas
 
 
+def contar_etapas_funcionario(id_funcionario):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM etapas
+        WHERE responsavel_id = %s
+    """, (id_funcionario,))
+
+    total = cursor.fetchone()[0]
+
+    cursor.close()
+    conexao.close()
+    return total
+
+
+def listar_etapas_por_funcionario(id_funcionario):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, titulo, descricao, data_entrega,
+               status, tipo_etapa, tipo_solo,
+               material_principal
+        FROM etapas
+        WHERE responsavel_id = %s
+    """, (id_funcionario,))
+
+    dados = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+    return dados
+
+
 def listar_etapas_para_diario(obra_id):
-    """Lista etapas formatadas para o diário de obra"""
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT e.titulo, e.descricao, e.status, e.data_entrega, e.tipo_etapa,
-               f.nome as responsavel_nome
-        FROM etapas e
-        LEFT JOIN funcionarios f ON e.responsavel_id = f.id_funcionario
-        WHERE e.obra_id = ?
-        ORDER BY e.id
-    ''', (obra_id,))
-    resultados = cursor.fetchall()
-    conn.close()
-    return resultados
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT titulo, descricao, status,
+               data_entrega, tipo_etapa,
+               (SELECT nome FROM funcionarios WHERE id = responsavel_id)
+        FROM etapas
+        WHERE obra_id = %s
+    """, (obra_id,))
+
+    dados = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+    return dados
